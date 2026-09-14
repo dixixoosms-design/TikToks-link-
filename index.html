@@ -95,7 +95,7 @@ async function getLocation() {
       const accuracy = Math.round(position.coords.accuracy);
 
       const { error } = await supabaseClient
-        .from("locations")
+        .from("Location")
         .insert({
           latitude: latitude,
           longitude: longitude,
@@ -104,7 +104,8 @@ async function getLocation() {
 
       if (error) {
         console.error(error);
-        result.innerHTML = "There was a problem sharing your location. Please try again.";
+        result.innerHTML =
+          "There was a problem sharing your location. Please try again.";
         return;
       }
 

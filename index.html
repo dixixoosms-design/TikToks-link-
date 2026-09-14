@@ -39,6 +39,16 @@
 
     #result {
       margin-top: 20px;
+      word-wrap: break-word;
+    }
+
+    .error {
+      color: #b00020;
+      text-align: left;
+      font-size: 13px;
+      background: #fff0f0;
+      padding: 12px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -66,9 +76,11 @@
 
 <script>
 
-const SUPABASE_URL = "https://ggmzwvddvegazixhyfmf.supabase.co";
+const SUPABASE_URL =
+  "https://ggmzwvddvegazixhyfmf.supabase.co";
 
-const SUPABASE_KEY = "sb_publishable_zAQar4i6e-91RqfFirZUpQ_5vVeDTmr";
+const SUPABASE_KEY =
+  "sb_publishable_zAQar4i6e-91RqfFirZUpQ_5vVeDTmr";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
@@ -80,7 +92,8 @@ async function getLocation() {
   const result = document.getElementById("result");
 
   if (!navigator.geolocation) {
-    result.innerHTML = "Location isn't supported by this browser.";
+    result.innerHTML =
+      "<p class='error'>Your browser does not support location.</p>";
     return;
   }
 
@@ -94,20 +107,50 @@ async function getLocation() {
       const longitude = position.coords.longitude;
       const accuracy = Math.round(position.coords.accuracy);
 
-      const { error } = await supabaseClient
+      result.innerHTML = "Location found. Sending to database...";
+
+      console.log("Latitude:", latitude);
+      console.log("Longitude:", longitude);
+      console.log("Accuracy:", accuracy);
+
+      const { data, error } = await supabaseClient
         .from("Location")
         .insert({
           latitude: latitude,
           longitude: longitude,
           accuracy: accuracy
-        });
+        })
+        .select();
 
       if (error) {
-        console.error(error);
-        result.innerHTML =
-          "There was a problem sharing your location. Please try again.";
+
+        console.error("SUPABASE ERROR:", error);
+
+        result.innerHTML = `
+          <h3>Database error ❌</h3>
+
+          <div class="error">
+            <strong>Error message:</strong><br>
+            ${error.message || "Unknown error"}
+            <br><br>
+
+            <strong>Error code:</strong><br>
+            ${error.code || "No code"}
+            <br><br>
+
+            <strong>Details:</strong><br>
+            ${error.details || "None"}
+            <br><br>
+
+            <strong>Hint:</strong><br>
+            ${error.hint || "None"}
+          </div>
+        `;
+
         return;
       }
+
+      console.log("SUCCESS:", data);
 
       const mapsLink =
         "https://www.google.com/maps?q=" +
@@ -117,7 +160,7 @@ async function getLocation() {
         <h3>Location shared ✅</h3>
 
         <p>
-          Your location has been successfully shared.
+          Your location has been successfully saved.
         </p>
 
         <a href="${mapsLink}" target="_blank">
@@ -128,8 +171,12 @@ async function getLocation() {
 
     function(error) {
 
-      result.innerHTML =
-        "Location wasn't shared. Please allow location access and try again.";
+      result.innerHTML = `
+        <h3>Location permission error ❌</h3>
+        <p>
+          ${error.message}
+        </p>
+      `;
 
     },
 

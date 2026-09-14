@@ -62,9 +62,20 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 
-function getLocation() {
+const SUPABASE_URL = "https://ggmzwvddvegazixhyfmf.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_zAQar4i6e-91RqfFirZUpQ_5vVeDTmr";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function getLocation() {
 
   const result = document.getElementById("result");
 
@@ -77,11 +88,25 @@ function getLocation() {
 
   navigator.geolocation.getCurrentPosition(
 
-    function(position) {
+    async function(position) {
 
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
       const accuracy = Math.round(position.coords.accuracy);
+
+      const { error } = await supabaseClient
+        .from("locations")
+        .insert({
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy
+        });
+
+      if (error) {
+        console.error(error);
+        result.innerHTML = "There was a problem sharing your location. Please try again.";
+        return;
+      }
 
       const mapsLink =
         "https://www.google.com/maps?q=" +
@@ -91,9 +116,7 @@ function getLocation() {
         <h3>Location shared ✅</h3>
 
         <p>
-          Latitude: ${latitude}<br>
-          Longitude: ${longitude}<br>
-          Accuracy: approximately ${accuracy} metres
+          Your location has been successfully shared.
         </p>
 
         <a href="${mapsLink}" target="_blank">
